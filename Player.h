@@ -1,6 +1,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+#ifndef WINDOW_H__
+#define WINDOW_H__
+#endif 
+
+#include "Window.h"
+
+
+
 typedef struct {
 	SDL_Rect rect;
 	SDL_Texture* texture;
@@ -23,6 +31,6 @@ typedef struct {
 	int countSprite; 
 } PLAYER;
 
-void DrawPlayer(PLAYER player, SDL_Renderer* windowRenderer);
+void DrawPlayer(PLAYER player, WINDOW* window);
 
 

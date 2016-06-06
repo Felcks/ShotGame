@@ -12,10 +12,14 @@
 #include "CollisionManager.h"
 #include "MonoBehaviour.h"
 #include "Font.h"
-#include "Window.h"
 
-#define SCREEN_WIDTH 100   
-#define SCREEN_HEIGHT  100
+/*#ifndef WINDOW_H__
+#define WINDOW_H__
+#endif 
+#include "Window.h"*/
+
+#define SCREEN_WIDTH 800   
+#define SCREEN_HEIGHT  600
 #define GAME_TITLE "JOGO DE TIRO"
 
 SDL_Texture* backgroundTexture = NULL;
@@ -70,8 +74,6 @@ int i, j;
 
 int main(void)
 {
-    //uint32_t window_flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
-	//CreateWindow(window_flags);
 
     CreateWindow(&window, GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -96,7 +98,9 @@ int main(void)
             {
 	            quit = 1;
 	        }
-    
+
+            WindowHandleEvent(e, &window);
+
             VECTOR2 mousePos = GetMousePos();
             LookAtMouse(&player, mousePos);
 
@@ -130,23 +134,26 @@ int main(void)
 	}
 }
 
-void Draw(){
+void Draw()
+{
+    if(window.minimized == 1)
+        return;
+
     //Screen
     SDL_SetRenderDrawColor( window.renderer, 0000, 0000, 0000, 0000 );
     SDL_RenderClear(window.renderer);
-
-     //DrawBackground
-       SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+    //DrawBackground
+    SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
     //Draw Player 
-    DrawPlayer(player, window.renderer);
+    DrawPlayer(player, &window);
      //Draw Shot
     for( i=0; i<arrayShot.length; i++)
          SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
     //Draw Enemies
     for( j=0; j<arrayEnemy.length; j++)
          SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
-
-     SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
+    //Draw Font
+    SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
     char scoreText[100];
     sprintf(scoreText, "%i", score);
     loadFromRenderedText(scoreText, textColor);
