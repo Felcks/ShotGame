@@ -5,8 +5,8 @@ void CreateWindow(WINDOW* window, char gameTitle[50], int screenWidth, int scree
 	(*window).SDLwindow = NULL;
 	(*window).renderer = NULL;
 
-	uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS;
-	(*window).SDLwindow = SDL_CreateWindow( gameTitle , SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_SHOWN);
+	uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+	(*window).SDLwindow = SDL_CreateWindow( gameTitle , SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, flags);
 
 	if( (*window).SDLwindow == NULL )
         printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );   
@@ -33,19 +33,40 @@ void WindowHandleEvent(SDL_Event e, WINDOW* window)
 	            (*window).width = e.window.data1;
 	            (*window).height = e.window.data2;
 	            SDL_RenderPresent( (*window).renderer );
+	            (*window).aspectRatio = (*window).width/ (*window).height;
             	break;
 
             //Repaint on exposure
             case SDL_WINDOWEVENT_EXPOSED:
 	            SDL_RenderPresent( (*window).renderer );
 	            break;
+	        //Mouse entered Window
+	        case SDL_WINDOWEVENT_ENTER:
+           	 	(*window).mouseFocus = 1;
+            break;
+            //Mouse left window
+            case SDL_WINDOWEVENT_LEAVE:
+            	(*window).mouseFocus = 0;
+            break;
+            //Window minimized
+            case SDL_WINDOWEVENT_MINIMIZED:
+           		(*window).minimized = 1;
+            break;
+            //Window maxized
+            case SDL_WINDOWEVENT_MAXIMIZED:
+            	(*window).minimized = 0;
+            break;
+            //Window restored
+            case SDL_WINDOWEVENT_RESTORED:
+            	(*window).minimized = 0;
+            break;
 	    }
 	}
 	else if( e.type == SDL_KEYDOWN)
     {
     	 const Uint8 *keystates = SDL_GetKeyboardState( NULL );
     	 if(keystates[ SDL_SCANCODE_RETURN] &&keystates[ SDL_SCANCODE_LCTRL]){
-	        if( (*window).fullScreen )
+	        if( (*window).fullScreen == 1 )
 	        {
 	            SDL_SetWindowFullscreen((*window).SDLwindow, SDL_FALSE );
 	            (*window).fullScreen = 0;

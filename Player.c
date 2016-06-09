@@ -8,8 +8,9 @@ void DrawPlayer(PLAYER player, WINDOW* window)
     
 
     player.imageRecort.y = player.spritePosY[player.indexSprite];
-    player.rect.w *= (*window).aspectRatio;
-    player.rect.h *= (*window).aspectRatio;
+    //player.rect.w *= (*window).aspectRatio;
+    //player.rect.h *= (*window).aspectRatio;
+   // player.rect.x = 
     SDL_RenderCopyEx( (*window).renderer, player.texture, &player.imageRecort, &player.rect, player.rotationDegrees, &playerImage, SDL_FLIP_NONE  );
     SDL_RenderCopy( (*window).renderer, player.lifeTexture, NULL, &player.lifeRect );
     SDL_RenderCopy( (*window).renderer, player.lifeTextureBG, NULL, &player.lifeRectBG );

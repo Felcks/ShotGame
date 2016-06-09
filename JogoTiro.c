@@ -86,7 +86,7 @@ int main(void)
     //int w, h;
     //SDL_GetWindowSize(window, &w, &h);
 
-    backgroundTexture = loadTexture("Sprites/Background0.jpg");
+    backgroundTexture = loadTexture("Sprites/BackgroundMenu.png");
 
     
 
