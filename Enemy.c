@@ -9,14 +9,14 @@ SDL_Rect ChasePlayer(SDL_Rect enemyRect, SDL_Rect playerRect, ENEMY* enemy)
 	(*enemy).countIA = 0;
 
 	if(enemyRect.x < playerRect.x)
-		enemyRect.x++;
+		enemyRect.x += (*enemy).speedH;
 	else
-		enemyRect.x--;
+		enemyRect.x -= (*enemy).speedH;
 
 	if(enemyRect.y < playerRect.y)
-		enemyRect.y++;
+		enemyRect.y += (*enemy).speedV;
 	else
-		enemyRect.y--;
+		enemyRect.y -= (*enemy).speedV;
 
 	return enemyRect;
 }

@@ -8,7 +8,8 @@ typedef struct {
 	int countSprite;
 	int delaySprite;
 	SDL_Texture* texture;
-	float speed;
+	int speedH;
+	int speedV;
 	int directionH;
 	int directionV;
 	int countIA;

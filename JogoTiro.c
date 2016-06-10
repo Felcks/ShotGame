@@ -22,7 +22,22 @@
 #define SCREEN_HEIGHT  600
 #define GAME_TITLE "JOGO DE TIRO"
 
+//WAVES
+#define WAVE1  5
+#define WAVE2  10
+#define WAVE3  12
+#define WAVE4  15
+#define WAVE5  20
+
 SDL_Texture* backgroundTexture = NULL;
+SDL_Texture* keyTexture = NULL;
+SDL_Rect keyRect;
+
+SDL_Texture* logoTexutre = NULL;
+SDL_Texture* fadeTexture = NULL;
+Uint8 alpha = 255;
+int fadeInDone = 0;
+int fadeOutDone = 0;
 
 void CreateComponents();
 void CreateFont();
@@ -47,11 +62,14 @@ VECTOR2 GetMousePos();
 void AnimPlayer();
 void AnimateEnemy();
 
+void PlayerHandleEvent(SDL_Event e);
+
 
 int quit = 0;
 SDL_Event e;
 int gameDelay = 8;
 int score = 0;
+int wavesurvived = 0;
 
 WINDOW window;
 
@@ -71,23 +89,52 @@ SDL_Rect fontRect;
 //Loops Variables
 int i, j;
 
+enum SCENE{ INTRO, MENU, GAME };
+enum SCENE scene;
+
+//returns 1 if done
+int FadeIn(Uint8* alpha)
+{
+    if((*alpha) <= 0)
+        return 1;
+    else{
+        (*alpha) -= 1;
+    }
+
+    return 0;
+}
+
+int FadeOut(Uint8* alpha)
+{
+    if((*alpha) >= 255)
+        return 1;
+    else{
+        (*alpha) += 1;
+    }
+
+    return 0;
+}
 
 int main(void)
 {
-
     CreateWindow(&window, GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-
 	CreateComponents();
     CreateFont();
 
+    scene = INTRO;
 
+    keyRect.x = 500;
+    keyRect.y = 100;
+    keyRect.w = 68;
+    keyRect.h = 37; 
 
     //int w, h;
     //SDL_GetWindowSize(window, &w, &h);
 
     backgroundTexture = loadTexture("Sprites/BackgroundMenu.png");
-
+    fadeTexture = loadTexture("Sprites/Fade.png");
+    logoTexutre = loadTexture("Sprites/Logo.jpg");
+    keyTexture = loadTexture("Sprites/Key.png");
     
 
 	while(quit == 0)
@@ -101,24 +148,9 @@ int main(void)
 
             WindowHandleEvent(e, &window);
 
-            VECTOR2 mousePos = GetMousePos();
-            LookAtMouse(&player, mousePos);
-
-            if(e.type == SDL_MOUSEBUTTONDOWN){
-
-                VECTOR2 playerPos;
-                playerPos.x = player.rect.x;
-                playerPos.y = player.rect.y;
-   
-
-                player.canShoot = 0;
-                VECTOR2 dir = GetVector(playerPos, mousePos);
-                dir = Normalize(dir);
-                Shoot(dir.x, dir.y);
-            }
-            if(e.type == SDL_MOUSEBUTTONUP && player.canShoot == 1 ){
-                player.canShoot = 1;
-            }
+            if(scene == GAME)
+            PlayerHandleEvent(e);
+           
         }
 
         SDL_Delay(gameDelay);
@@ -129,9 +161,88 @@ int main(void)
         player.lifeRectBG.y = player.rect.y - 10;
         player.lifeRect.w = player.hp;
 
+
         Update();
         Draw();       
 	}
+}
+
+void PlayerHandleEvent(SDL_Event e)
+{
+     VECTOR2 mousePos = GetMousePos();
+    LookAtMouse(&player, mousePos);
+
+    if(e.type == SDL_MOUSEBUTTONDOWN){
+
+        VECTOR2 playerPos;
+        playerPos.x = player.rect.x;
+        playerPos.y = player.rect.y;
+
+
+        player.canShoot = 0;
+        VECTOR2 dir = GetVector(playerPos, mousePos);
+        dir = Normalize(dir);
+        Shoot(dir.x, dir.y);
+    }
+    if(e.type == SDL_MOUSEBUTTONUP && player.canShoot == 1 ){
+        player.canShoot = 1;
+    }
+}
+
+void DrawIntro()
+{
+    SDL_RenderCopy( window.renderer, logoTexutre, NULL, NULL );
+
+    SDL_SetTextureBlendMode(fadeTexture, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureAlphaMod( fadeTexture, alpha );
+    SDL_RenderCopy( window.renderer, fadeTexture, NULL, NULL );
+    
+    if(fadeInDone == 0)
+        fadeInDone = FadeIn(&alpha);
+    else
+        fadeOutDone = FadeOut(&alpha);
+        
+    if(fadeOutDone == 1){
+        scene = MENU;
+        fadeInDone = 0;
+        fadeOutDone = 0;
+    }
+}
+
+void DrawMenu()
+{
+    SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+
+    
+    SDL_RenderCopy( window.renderer, keyTexture, NULL, &keyRect );
+    
+    if(fadeInDone == 0)
+        fadeInDone = FadeIn(&alpha);
+    
+   
+
+}
+
+
+
+void DrawGame()
+{
+        //DrawBackground
+        SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+        //Draw Player 
+        DrawPlayer(player, &window);
+         //Draw Shot
+        for( i=0; i<arrayShot.length; i++)
+             SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
+        //Draw Enemies
+        for( j=0; j<arrayEnemy.length; j++)
+             SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
+        //Draw Font
+        SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
+        char scoreText[100];
+        sprintf(scoreText, "%i", score);
+        loadFromRenderedText(scoreText, textColor);
+        SDL_RenderCopy( window.renderer, scoreTexture, NULL, &fontRect);
 }
 
 void Draw()
@@ -142,36 +253,32 @@ void Draw()
     //Screen
     SDL_SetRenderDrawColor( window.renderer, 0000, 0000, 0000, 0000 );
     SDL_RenderClear(window.renderer);
-    //DrawBackground
-    SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
-    //Draw Player 
-    DrawPlayer(player, &window);
-     //Draw Shot
-    for( i=0; i<arrayShot.length; i++)
-         SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
-    //Draw Enemies
-    for( j=0; j<arrayEnemy.length; j++)
-         SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
-    //Draw Font
-    SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
-    char scoreText[100];
-    sprintf(scoreText, "%i", score);
-    loadFromRenderedText(scoreText, textColor);
-    SDL_RenderCopy( window.renderer, scoreTexture, NULL, &fontRect);
-   
+
+    if(scene == INTRO){
+        DrawIntro();
+    }
+    else if(scene == MENU){
+        DrawMenu();
+    }
+    else if(scene == GAME){
+        DrawGame();
+    }
 
     SDL_RenderPresent(window.renderer); 
 }
 
 void Update()
 {
-    UpdateKeyBoard();
-    UpdateShotPosition();
-    PlayerVunerability();
-    GameOver();
-    CreateRound();
-    Collision();
-    AnimateEnemy();
+    if(scene == GAME){
+        UpdateKeyBoard();
+        UpdateShotPosition();
+        PlayerVunerability();
+        GameOver();
+        CreateRound();
+        Collision();
+        AnimateEnemy();
+    }
+
 }
 
 void Collision()
@@ -192,7 +299,6 @@ void Collision()
      //Collison Enemy_border + follow player
     for(j = 0; j< arrayEnemy.length; j++){
        // arrayEnemy.vetor[j].rect = Collision_Rect_Screen(arrayEnemy.vetor[j].rect, SCREEN_WIDTH, SCREEN_HEIGHT);
-
         arrayEnemy.vetor[j].rect = ChasePlayer(arrayEnemy.vetor[j].rect, player.rect, &arrayEnemy.vetor[j]);
     }
 
@@ -274,15 +380,72 @@ void RemoveAt_Enemy(ARRAYENEMY *arrayEnemy, int pos)
 
 
 int posVector[24];
-void CreateRound(){
-    for(i = 0; i<24; i++)
+void CreateRound()
+{
+
+
+
+    for(i = 0; i< 24 ; i++)
         posVector[i] = 0;
 
+    if (wavesurvived == 6)
+        wavesurvived = 0;
+
     if(arrayEnemy.length == 0){
-        for(i=0; i<24; i++){
+        if (wavesurvived == 0){
+
+            for(i=0; i<WAVE1; i++){
             CreateEnemy();
+            
+            
+            }
+             wavesurvived ++;
         }
+        else if (wavesurvived == 1){
+
+            for(i=0; i<WAVE2; i++){
+            CreateEnemy();
+           
+            }
+             wavesurvived ++;
+        }
+        else if (wavesurvived == 2){
+
+            for(i=0; i<WAVE3; i++){
+            CreateEnemy();
+            
+            
+            }
+             wavesurvived ++;
+        }
+         
+         else if (wavesurvived == 3){
+
+            for(i=0; i<WAVE4; i++){
+            CreateEnemy();
+            
+            }
+             wavesurvived ++;
+         }
+         else if (wavesurvived == 4){
+
+
+
+            for(i=0; i<WAVE5; i++){
+            CreateEnemy();
+            
+            
+            }
+
+             wavesurvived ++;
+             
+         }
+
     }
+
+   
+    
+    
 }
 
 void GameOver(){
@@ -318,6 +481,7 @@ void CreateEnemy()
     }
         
 
+
     
     
     ENEMY enemy;
@@ -325,7 +489,8 @@ void CreateEnemy()
     enemy.rect.y = y[quad];
     enemy.rect.w = 32;
     enemy.rect.h = 32;
-    enemy.speed = 1;
+    enemy.speedH = 1;
+    enemy.speedV = 1;
     enemy.texture = loadTexture("Sprites/ghost.png");
     enemy.countIA = 0;
     enemy.imageRect.x = 0;
@@ -336,6 +501,12 @@ void CreateEnemy()
     enemy.spriteMax = 2;
     enemy.delaySprite = 0;
 
+    if (wavesurvived == 5)
+    {
+        enemy.speedH = 2;
+        enemy.speedV = 2;
+        wavesurvived ++;
+    }
 
     arrayEnemy.vetor[arrayEnemy.length] = enemy;
     arrayEnemy.length++;
@@ -403,7 +574,7 @@ void UpdateKeyBoard()
 {
         const Uint8 *keystates = SDL_GetKeyboardState( NULL );
 
-        if(keystates[ SDLK_ESCAPE ]){
+        if(keystates[ SDL_SCANCODE_ESCAPE ]){
             quit = 1;
         }
 

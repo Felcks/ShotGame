@@ -14,6 +14,8 @@ void CreateWindow(WINDOW* window, char gameTitle[50], int screenWidth, int scree
         (*window).width = screenWidth;
         (*window).height = screenHeight;
         (*window).renderer = SDL_CreateRenderer( (*window).SDLwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );    
+
+        SDL_RenderSetLogicalSize((*window).renderer, (*window).width, (*window).height);
     }
 
     (*window).mouseFocus = 1;
