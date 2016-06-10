@@ -30,6 +30,7 @@
 #define WAVE5  20
 
 SDL_Texture* backgroundTexture = NULL;
+SDL_Texture* borderTexture = NULL;
 SDL_Texture* keyTexture = NULL;
 SDL_Rect keyRect;
 
@@ -106,10 +107,10 @@ int FadeIn(Uint8* alpha)
 
 int FadeOut(Uint8* alpha)
 {
-    if((*alpha) >= 255)
+    if((*alpha) >= 254)
         return 1;
     else{
-        (*alpha) += 1;
+        (*alpha) += 2;
     }
 
     return 0;
@@ -123,15 +124,16 @@ int main(void)
 
     scene = INTRO;
 
-    keyRect.x = 500;
+    keyRect.x = 650;
     keyRect.y = 100;
-    keyRect.w = 68;
-    keyRect.h = 37; 
+    keyRect.w = 34;
+    keyRect.h = 18; 
 
     //int w, h;
     //SDL_GetWindowSize(window, &w, &h);
 
-    backgroundTexture = loadTexture("Sprites/BackgroundMenu.png");
+    backgroundTexture = loadTexture("Sprites/Background0.png");
+    borderTexture = loadTexture("Sprites/Border_Black.png");
     fadeTexture = loadTexture("Sprites/Fade.png");
     logoTexutre = loadTexture("Sprites/Logo.jpg");
     keyTexture = loadTexture("Sprites/Key.png");
@@ -148,7 +150,7 @@ int main(void)
 
             WindowHandleEvent(e, &window);
 
-            if(scene == GAME)
+            if(scene == GAME || scene == MENU)
             PlayerHandleEvent(e);
            
         }
@@ -212,15 +214,11 @@ void DrawIntro()
 void DrawMenu()
 {
     SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
-
     
     SDL_RenderCopy( window.renderer, keyTexture, NULL, &keyRect );
     
     if(fadeInDone == 0)
         fadeInDone = FadeIn(&alpha);
-    
-   
-
 }
 
 
@@ -228,7 +226,8 @@ void DrawMenu()
 void DrawGame()
 {
         //DrawBackground
-        SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+        //SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+        
         //Draw Player 
         DrawPlayer(player, &window);
          //Draw Shot
@@ -237,6 +236,8 @@ void DrawGame()
         //Draw Enemies
         for( j=0; j<arrayEnemy.length; j++)
              SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
+        //Draw Border
+        //SDL_RenderCopy( window.renderer, borderTexture, NULL, NULL );
         //Draw Font
         SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
         char scoreText[100];
@@ -257,10 +258,8 @@ void Draw()
     if(scene == INTRO){
         DrawIntro();
     }
-    else if(scene == MENU){
+    else if(scene == GAME || scene == MENU){
         DrawMenu();
-    }
-    else if(scene == GAME){
         DrawGame();
     }
 
@@ -269,16 +268,17 @@ void Draw()
 
 void Update()
 {
-    if(scene == GAME){
-        UpdateKeyBoard();
+    if(scene == GAME || scene == MENU){
         UpdateShotPosition();
+        UpdateKeyBoard();
+        Collision();
+    }
+    else if(scene == GAME){
         PlayerVunerability();
         GameOver();
         CreateRound();
-        Collision();
         AnimateEnemy();
     }
-
 }
 
 void Collision()
