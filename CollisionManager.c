@@ -3,20 +3,20 @@
 
 SDL_Rect Collision_Rect_Screen(SDL_Rect rect, int ScreenWidth, int ScreenHeight){
 	
-	if (rect.x < 0){
-		rect.x = 0;
+	if (rect.x < 100){
+		rect.x = 100;
 	}
 
-	if (rect.x + rect.w > ScreenWidth){
-		rect.x = ScreenWidth - rect.w;
+	if (rect.x + rect.w + 100 > ScreenWidth){
+		rect.x = ScreenWidth - rect.w - 100;
 	}
 
-	if (rect.y < 0){
-		rect.y = 0;
+	if (rect.y < 80){
+		rect.y = 80;
 	}
 
-	if (rect.y + rect.h > ScreenHeight){
-		rect.y = ScreenHeight - rect.h;
+	if (rect.y + rect.h + 80 > ScreenHeight){
+		rect.y = ScreenHeight - rect.h - 80;
 	}
 
 	return rect;
