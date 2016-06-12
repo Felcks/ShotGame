@@ -21,6 +21,8 @@
 #define SCREEN_WIDTH 800   
 #define SCREEN_HEIGHT  600
 #define GAME_TITLE "JOGO DE TIRO"
+#define SCREEN_FPS  60
+#define SCREEN_TICKS_PER_FRAME 1000 / SCREEN_FPS
 
 //WAVES
 #define WAVE1  5
@@ -36,7 +38,17 @@ SDL_Rect keyRect;
 
 //Door left
 SDL_Texture* doorLeftTexture = NULL;  
-SDL_Rect rect;
+SDL_Rect doorLeftRect;
+SDL_Rect blackLeftRect;
+
+SDL_Texture* doorRightTexture = NULL;  
+SDL_Rect doorRightRect;
+SDL_Rect blackRightRect;
+
+SDL_Texture* doorUpTexture = NULL;  
+SDL_Rect doorUpRect;
+SDL_Rect blackUpRect;
+
 
 
 SDL_Texture* logoTexutre = NULL;
@@ -69,8 +81,10 @@ VECTOR2 GetMousePos();
 void AnimPlayer();
 void AnimateEnemy();
 
+void openFileRead();
+void openFileWrite();
+
 void PlayerHandleEvent(SDL_Event e);
-É O BASICO;
 int quit = 0;
 SDL_Event e;
 int gameDelay = 8;
@@ -98,32 +112,22 @@ SDL_Rect fontRect;
 //Loops Variables
 int i, j;
 
-enum SCENE{ INTRO, MENU, GAME };
+enum SCENE{ INTRO, MENU, GAME, MENU_AND_GAME };
 enum SCENE scene;
 
-//returns 1 if done
-int FadeIn(Uint8* alpha)
-{
-    if((*alpha) <= 0)
-        return 1;
-    else{
-        (*alpha) -= 1;
-    }
 
-    return 0;
-}
+Uint32  startTicks;
+int countedFrames = 1;
 
-int FadeOut(Uint8* alpha)
-{
-    if((*alpha) >= 254)
-        return 1;
-    else{
-        (*alpha) += 2;
-    }
+Uint32 currentTicks;
 
-    return 0;
-}
 
+// Variaveis do arquivo//
+int vetor[] = {0,0,0,0,0,0,0,0,0,0};
+FILE *arquivo;
+
+FILE *arquivoSTR;
+char vetorSTR[10][10];
 
 
 int main(void)
@@ -132,13 +136,47 @@ int main(void)
     CreateWindow(&window, GAME_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT);
     CreateComponents();
     CreateFont();
-
+    openFileRead();
+   
     scene = INTRO;
 
     keyRect.x = 650;
     keyRect.y = 100;
     keyRect.w = 34;
     keyRect.h = 18; 
+
+    doorLeftRect.w = 75;
+    doorLeftRect.h = 150;
+    doorLeftRect.x = 40;
+    doorLeftRect.y = SCREEN_HEIGHT/2 - 100 ;
+
+    blackLeftRect.w = 75;
+    blackLeftRect.h = 150;
+    blackLeftRect.x = 35;
+    blackLeftRect.y = SCREEN_HEIGHT/2 - 100 ;
+
+    doorRightRect.w = 75;
+    doorRightRect.h = 150;
+    doorRightRect.x = SCREEN_WIDTH - 40 - 75;
+    doorRightRect.y = SCREEN_HEIGHT/2 - 100 ;
+
+    blackRightRect.w = 75;
+    blackRightRect.h = 150;
+    blackRightRect.x = SCREEN_WIDTH - 35 - 75;
+    blackRightRect.y = SCREEN_HEIGHT/2 - 100 ;
+
+    doorUpRect.w = 140;
+    doorUpRect.h = 55;
+    doorUpRect.x = SCREEN_WIDTH/2 - 70;
+    doorUpRect.y = 32;
+
+    blackUpRect.w = 140;
+    blackUpRect.h = 55;
+    blackUpRect.x = SCREEN_WIDTH/2  - 70;
+    blackUpRect.y = 27;
+
+
+
 
     //int w, h;
     //SDL_GetWindowSize(window, &w, &h);
@@ -148,11 +186,33 @@ int main(void)
     fadeTexture = loadTexture("Sprites/Fade.png");
     logoTexutre = loadTexture("Sprites/Logo.jpg");
     keyTexture = loadTexture("Sprites/Key.png");
-
     
+    doorLeftTexture = loadTexture("Sprites/Doors/DoorLeft_1.png");
+    doorRightTexture = loadTexture("Sprites/Doors/DoorRight_1.png");
+    doorUpTexture = loadTexture("Sprites/Doors/DoorUp_1.png");
+
+
+    startTicks = SDL_GetTicks();
 
 	while(quit == 0)
     {
+        currentTicks = SDL_GetTicks();
+
+
+       // printf("%i\n",(currentTicks - startTicks) );
+
+
+        //If frame finished early
+        int frameTicks = ((currentTicks - startTicks) / 1000);
+        if( frameTicks > SCREEN_TICKS_PER_FRAME )
+        {
+            //printf("bb\n");
+            //Wait remaining time
+            SDL_Delay( frameTicks - SCREEN_TICKS_PER_FRAME );
+            startTicks = SDL_GetTicks();
+        }
+
+
 		while( SDL_PollEvent( &e ) != 0 )
         {
             if( e.type == SDL_QUIT )
@@ -186,7 +246,8 @@ int main(void)
         }
 
         Update();
-        Draw();       
+        Draw();  
+        countedFrames++;     
 	}
 }
 
@@ -236,7 +297,7 @@ void DrawMenu()
 {
     SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
     
-    scene = GAME;
+   // scene = GAME;
     
     if(fadeInDone == 0)
         fadeInDone = FadeIn(&alpha);
@@ -247,27 +308,36 @@ void DrawMenu()
 void DrawGame()
 {
         //DrawBackground
-
-     
-
-
-         SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+        SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
+        
+        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackLeftRect );
+        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackRightRect );
+        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackUpRect );
+        
 
 
 
 
         //SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
         
+        //Draw Enemies
+        for( j=0; j<arrayEnemy.length; j++)
+             SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
+        
+         //Draw Border
+        SDL_RenderCopy( window.renderer, borderTexture, NULL, NULL );
+         //DrawDoor
+        SDL_RenderCopy( window.renderer, doorLeftTexture, NULL, &doorLeftRect );
+        SDL_RenderCopy( window.renderer, doorRightTexture, NULL, &doorRightRect );
+        SDL_RenderCopy( window.renderer, doorUpTexture, NULL, &doorUpRect );
+
         //Draw Player 
         DrawPlayer(player, &window);
          //Draw Shot
         for( i=0; i<arrayShot.length; i++)
              SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
-        //Draw Enemies
-        for( j=0; j<arrayEnemy.length; j++)
-             SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
-        //Draw Border
-      	SDL_RenderCopy( window.renderer, borderTexture, NULL, NULL );
+       
+       
         //Draw Font
         SDL_Color textColor = { 0xFF, 0xFF, 0xFF };
         char scoreText[100];
@@ -314,6 +384,87 @@ void Update()
     }
 }
 
+void Reajust(int* vetor, int pos, int number){
+    if(pos == 10)
+        return;
+
+    int newNumber = vetor[pos];
+    
+    vetor[pos] = number;
+
+    Reajust(vetor, pos + 1, newNumber);
+}
+
+void ReajustSTR(char vetor[][10], int pos, char* name){
+    if(pos == 10)
+        return;
+
+    char newName[10];
+    strcpy(newName,vetor[pos]);
+    //printf("%s\n",name );
+    
+    strcpy(vetor[pos],name);
+
+    ReajustSTR(vetor, pos + 1, newName);
+}
+
+void openFileWrite()
+{
+    int numero;
+    int j;
+
+    arquivo = fopen("arquivo.txt","w");
+    arquivoSTR = fopen("arquivoSTR.txt", "w");
+
+    
+    for(i = 0; i < 10; i++){
+        if(score > vetor[i])
+        {
+            
+            Reajust(vetor, i, score);
+            char name[10];
+            
+            //scanf("Digite seu nome: %s", name);
+            ReajustSTR(vetorSTR, i, "Felcks");
+            break;
+        }
+    }
+
+
+    
+
+    for(i = 0; i < 10; i++){    
+
+            //printf("%i\n",vetor[i] );
+            fprintf(arquivo,"%d ",vetor[i]);
+            fprintf(arquivoSTR,"%s ",vetorSTR[i]);
+            
+    }
+
+    printf("Arquivo criado com sucesso");
+    fclose(arquivo);
+    fclose(arquivoSTR);
+
+}
+void openFileRead(){
+    arquivo = fopen("arquivo.txt","r");
+    arquivoSTR = fopen("arquivoSTR.txt", "r");
+
+
+    
+    i = 0;
+    while (!feof(arquivo)){ 
+            fscanf(arquivo,"%d",&vetor[i]);
+            fscanf(arquivoSTR,"%s",vetorSTR[i]);
+            
+            i++;
+    }
+
+    
+    fclose(arquivo);
+    fclose(arquivoSTR);
+
+}
 void Collision()
 {
     player.rect = Collision_Rect_Screen(player.rect, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -508,9 +659,11 @@ void CreateRound(){
     
     
 }
-void GameOver(){
+void GameOver()
+{
     if(player.hp <= 0){
         
+        openFileWrite();  
         score = 0;
         wavesurvived = 0;
         
@@ -808,7 +961,7 @@ void CreateComponents(){
     player.texture = loadTexture("Sprites/PlayerSprite1.png");
     player.lifeTexture = loadTexture("Sprites/Life.png");
     player.lifeTextureBG = loadTexture("Sprites/Life_BG.png");
-    player.hp = 34;
+    player.hp = 1;
     player.lifeRect.x = player.rect.x + 5;
     player.lifeRect.y = player.rect.y - 10;
     player.lifeRect.w = player.hp;

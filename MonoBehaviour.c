@@ -21,6 +21,28 @@ VECTOR2 GetVector(VECTOR2 vector1, VECTOR2 vector2)
     return newVector;
 }
 
+int FadeIn(Uint8* alpha)
+{
+    if((*alpha) <= 0)
+        return 1;
+    else{
+        (*alpha) -= 1;
+    }
+
+    return 0;
+}
+
+int FadeOut(Uint8* alpha)
+{
+    if((*alpha) >= 254)
+        return 1;
+    else{
+        (*alpha) += 2;
+    }
+
+    return 0;
+}
+
 
 double Degree(VECTOR2 vector1, VECTOR2 vector2)
 {
