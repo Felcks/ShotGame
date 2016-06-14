@@ -49,6 +49,11 @@ SDL_Texture* doorUpTexture = NULL;
 SDL_Rect doorUpRect;
 SDL_Rect blackUpRect;
 
+SDL_Texture* doorDownTexture = NULL;  
+SDL_Rect doorDownRect;
+SDL_Rect blackDownRect;
+
+
 
 
 SDL_Texture* logoTexutre = NULL;
@@ -175,21 +180,33 @@ int main(void)
     blackUpRect.x = SCREEN_WIDTH/2  - 70;
     blackUpRect.y = 27;
 
+    doorDownRect.w = 140;
+    doorDownRect.h = 55;
+    doorDownRect.x = SCREEN_WIDTH/2 - 70;
+    doorDownRect.y = SCREEN_HEIGHT - 83;
+
+    blackDownRect.w = 140;
+    blackDownRect.h = 55;
+    blackDownRect.x = SCREEN_WIDTH/2  - 70;
+    blackDownRect.y = SCREEN_HEIGHT - 78;
+
 
 
 
     //int w, h;
     //SDL_GetWindowSize(window, &w, &h);
 
-    backgroundTexture = loadTexture("Sprites/Background0.png");
+    backgroundTexture = loadTexture("Sprites/MENU1.png");
     borderTexture = loadTexture("Sprites/Border_Purple.png");
     fadeTexture = loadTexture("Sprites/Fade.png");
     logoTexutre = loadTexture("Sprites/Logo.jpg");
     keyTexture = loadTexture("Sprites/Key.png");
     
-    doorLeftTexture = loadTexture("Sprites/Doors/DoorLeft_1.png");
-    doorRightTexture = loadTexture("Sprites/Doors/DoorRight_1.png");
-    doorUpTexture = loadTexture("Sprites/Doors/DoorUp_1.png");
+    doorLeftTexture = loadTexture("Sprites/Doors/DoorLeft_0.png");
+    doorRightTexture = loadTexture("Sprites/Doors/DoorRight_0.png");
+    doorUpTexture = loadTexture("Sprites/Doors/DoorUp_0.png");
+    doorDownTexture = loadTexture("Sprites/Doors/DoorDown_0.png");
+
 
 
     startTicks = SDL_GetTicks();
@@ -295,9 +312,24 @@ void DrawIntro()
 
 void DrawMenu()
 {
+    //Draw Background
     SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
-    
-   // scene = GAME;
+    //Draw BlackSquares
+    SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackLeftRect );
+    SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackRightRect );
+    SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackUpRect );
+    SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackDownRect );
+    //Draw Door
+    SDL_RenderCopy( window.renderer, doorLeftTexture, NULL, &doorLeftRect );
+    SDL_RenderCopy( window.renderer, doorRightTexture, NULL, &doorRightRect );
+    SDL_RenderCopy( window.renderer, doorUpTexture, NULL, &doorUpRect );
+    SDL_RenderCopy( window.renderer, doorDownTexture, NULL, &doorDownRect );
+    //DrawKey
+    SDL_RenderCopy( window.renderer, keyTexture, NULL, &keyRect );
+    //Draw Border
+    SDL_RenderCopy( window.renderer, borderTexture, NULL, NULL );
+    //Draw Player 
+    DrawPlayer(player, &window);
     
     if(fadeInDone == 0)
         fadeInDone = FadeIn(&alpha);
@@ -309,14 +341,6 @@ void DrawGame()
 {
         //DrawBackground
         SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
-        
-        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackLeftRect );
-        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackRightRect );
-        SDL_RenderCopy( window.renderer, fadeTexture, NULL, &blackUpRect );
-        
-
-
-
 
         //SDL_RenderCopy( window.renderer, backgroundTexture, NULL, NULL );
         
@@ -324,15 +348,11 @@ void DrawGame()
         for( j=0; j<arrayEnemy.length; j++)
              SDL_RenderCopyEx( window.renderer, arrayEnemy.vetor[j].texture, &arrayEnemy.vetor[j].imageRect, &arrayEnemy.vetor[j].rect, 0, NULL, SDL_FLIP_NONE);
         
-         //Draw Border
-        SDL_RenderCopy( window.renderer, borderTexture, NULL, NULL );
-         //DrawDoor
-        SDL_RenderCopy( window.renderer, doorLeftTexture, NULL, &doorLeftRect );
-        SDL_RenderCopy( window.renderer, doorRightTexture, NULL, &doorRightRect );
-        SDL_RenderCopy( window.renderer, doorUpTexture, NULL, &doorUpRect );
-
+       
         //Draw Player 
+        if(scene != MENU_AND_GAME)
         DrawPlayer(player, &window);
+
          //Draw Shot
         for( i=0; i<arrayShot.length; i++)
              SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
@@ -355,18 +375,29 @@ void Draw()
     SDL_SetRenderDrawColor( window.renderer, 0000, 0000, 0000, 0000 );
     SDL_RenderClear(window.renderer);
 
+    
     if(scene == INTRO){
         DrawIntro();
     }
-    else if(scene == GAME) {
-        
+    if(scene == GAME) {
         DrawGame();
     }
-    else if (scene == MENU){
+    if (scene == MENU){
         DrawMenu();
+    }
+    if(scene == GAME || scene == MENU){
+         //Draw Shot
+        for( i=0; i<arrayShot.length; i++)
+             SDL_RenderCopy( window.renderer, arrayShot.defaultShotTexture, NULL, &arrayShot.vetor[i].rect );
     }
 
     SDL_RenderPresent(window.renderer); 
+}
+
+void TakeKey(){
+    if(Collision_Rect_Rect(player.rect, keyRect) == 1){
+        keyRect.x = 999;
+    }
 }
 
 void Update()
@@ -381,6 +412,9 @@ void Update()
         GameOver();
         CreateRound();
         AnimateEnemy();
+    }
+    if(scene == MENU){
+        TakeKey();
     }
 }
 
@@ -961,7 +995,7 @@ void CreateComponents(){
     player.texture = loadTexture("Sprites/PlayerSprite1.png");
     player.lifeTexture = loadTexture("Sprites/Life.png");
     player.lifeTextureBG = loadTexture("Sprites/Life_BG.png");
-    player.hp = 1;
+    player.hp = 34;
     player.lifeRect.x = player.rect.x + 5;
     player.lifeRect.y = player.rect.y - 10;
     player.lifeRect.w = player.hp;
